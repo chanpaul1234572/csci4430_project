@@ -89,7 +89,7 @@ int main(int argc,char** argv){
 				exit(0);
 		}else{
 			//open worker thread
-			clientsd_p = malloc(sizeof(int client_sd)); 
+			clientsd_p = malloc(sizeof(int)); 
 			clientsd_p = client_sd;
 			if(pthread_create(&threadid, NULL, workerthread, clientsd_p)==-1){
 				printf("create thread error: %s (Errno:%d)\n", strerror(errno), errno);
