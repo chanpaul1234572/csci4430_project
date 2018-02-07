@@ -7,7 +7,7 @@
 #include<sys/types.h>
 #include<netinet/in.h>
 #include<arpa/inet.h>
-#include<message.h>
+#include "myftp.h"
 
 void request_prepare(struct message* message_to_send, char* cmd, char* file, int payload_size){
 	const int header_size = 15;

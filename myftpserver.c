@@ -10,7 +10,7 @@
 #include<netinet/in.h>
 #include<arpa/inet.h>
 #include<pthread.h>
-#include<myftp.h> //remember change name into myftp.h
+#include "myftp.h" 
 
 /*
 ->error log change later
