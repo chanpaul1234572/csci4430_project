@@ -41,9 +41,13 @@ void clientconnection(int client_sd){
 		}
 		else
 			if(buf->type == 0xB1){	//get
-
+				FILE *fp;
+				char fname[100];
+				char server_path[8] = "./data "; 
+				char fpath[108];
+				fpath = strcat(server_path,fname);
 				//reply GET_REPLY
-				if(readdir(dir)!=0){
+				if(fp = fopen(fpath ,"r")!=NULL){  /
 					printf("File doesn't exists\n");
 					message_to_send -> type = 0xB3;
 					message_to_send -> length = header_size;
@@ -57,8 +61,15 @@ void clientconnection(int client_sd){
 					if(send(client_sd, message_to_send,sizeof(message_to_send),0)==-1){
 						perror("sending error");
 					}
-					
-					close(dir);
+					//FILE-DATA
+					message_to_send -> type = 0xFF;
+					message_to_send -> length = header_size + file_size;
+					message_to_send-> payload = file; //?
+					if(send(client_sd, message_to_send,sizeof(message_to_send),0)==-1){
+					perror("sending file error");
+					}
+
+					fclose(fp);
 				}
 			}
 		else
@@ -106,20 +117,24 @@ int main(int argc,char** argv){
 		printf("Listen error: %s (Errno:%d)\n", strerror(errno), errno);
 		exit(0);
 	}
+	int connection_count=0;
 	//accept 
 	while(1){
+
 		if(client_sd = accept(sd, (struct sockaddr*) &client_addr, &addrlen)==-1){
 				printf("Accept error: %s (Errno:%d)\n", strerror(errno), errno);
 				exit(0);
 		}else{
 			//open worker thread
+			connection_count++;
+			printf("count->%d", connection_count);
 			buf = ntohl(buf);
 			clientsd_p = malloc(sizeof(int)); 
 			clientsd_p = client_sd;
 			if(pthread_create(&threadid, NULL, workerthread, clientsd_p)==-1){
 				printf("create thread error: %s (Errno:%d)\n", strerror(errno), errno);
 				free(clientsd_p);
-				free(client_addr);
+				// free(client_addr);
 				close(sd);
 				close(client_sd);
 				pthread_exit(NULL);
