@@ -10,6 +10,7 @@
 #include<netinet/in.h>
 #include<arpa/inet.h>
 #include<pthread.h>
+#include<dirent.h>
 #include "myftp.h" 
 
 /*
@@ -40,9 +41,9 @@ void clientconnection(int client_sd){
 		}
 		else
 			if(buf->type == 0xB1){	//get
-			
+
 				//reply GET_REPLY
-				if(){
+				if(readdir(dir)!=0){
 					printf("File doesn't exists\n");
 					message_to_send -> type = 0xB3;
 					message_to_send -> length = header_size;
@@ -56,7 +57,8 @@ void clientconnection(int client_sd){
 					if(send(client_sd, message_to_send,sizeof(message_to_send),0)==-1){
 						perror("sending error");
 					}
-
+					
+					close(dir);
 				}
 			}
 		else
