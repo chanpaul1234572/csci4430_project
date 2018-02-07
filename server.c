@@ -15,6 +15,7 @@
 /*
 ->error log change later
 ->listen() max pending N ...?
+header 10bytes 514bits
 */
 
 void *workerthread(int *clientsd_p){
@@ -29,7 +30,7 @@ void *workerthread(int *clientsd_p){
 
 //Handling client requests
 void clientconnection(int client_sd){
-
+	const int header_size = 15;
 	if((len = recv(client_sd,buf,sizeof(buf),0)) < 0){
 		printf("Receive Error!");
 	}else{
@@ -38,12 +39,32 @@ void clientconnection(int client_sd){
 			//working..
 		}
 		else
-			if(buf->type == 0xB1){
-					//get
+			if(buf->type == 0xB1){	//get
+			
+				//reply GET_REPLY
+				if(){
+					printf("File doesn't exists\n");
+					message_to_send -> type = 0xB3;
+					message_to_send -> length = header_size;
+					if(send(client_sd)==-1){
+					perror("sending error");
+					}
+				}else{
+					printf("File:%s exists, prepare for download\n");
+					message_to_send -> type = 0xB2;
+					message_to_send -> length = header_size;
+					if(send()==-1){
+						perror("sending error");
+					}
+
+				}
 			}
 		else
-			if(buf->type == 0xC1){
-					//put
+			if(buf->type == 0xC1){	//put
+
+				//reply PUT_REPLY
+
+				//wait for FILE_DATA
 			}
 		else
 			printf("Wrong request!");
@@ -68,6 +89,7 @@ int main(int argc,char** argv){
 	int client_sd, buf; 
 	struct sockaddr_in server_addr, client_addr;
 	unsigned int addrlen = sizeof(client_addr);
+	struct message* message_to_send;
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin.family = AF_INET;
 	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
