@@ -10,7 +10,7 @@
 #include<netinet/in.h>
 #include<arpa/inet.h>
 #include<pthread.h>
-#include<myftp.h>
+#include<message.h> //remember change name into myftp.h
 
 /*
 ->error log change later
@@ -55,6 +55,33 @@ int main(int argc,char** argv){
 
 		}
 	}
+
+// fork version
+// need put back to suitable space
+   if(!fork()){
+		close(sd);
+		if((len = recv(client_sd,buf,sizeof(buf),0)) < 0){
+			printf("Receive Error!");
+		}else{
+			if(buf->type == 0xA1){
+					//list
+				//working..
+			}
+			else
+				if(buf->type == 0xB1){
+						//get
+				}
+			else
+				if(buf->type == 0xC1){
+						//put
+				}
+			else
+				printf("Wrong request!");
+
+		}
+
+	}
+
 	close(sd);
 	return 0;
 }
