@@ -56,10 +56,25 @@ void clientconnection(int client_sd){
   			    		strcat(lsentry,temp);
   			    		strcat(lsentry,"\n");
   					}
-  					free(pStEntry);
-  					free(pStResult);
-  					closedir(pDir);
-  					
+  				strcat(lsentry,"\0");
+  				free(pStEntry);
+  				free(pStResult);
+  				closedir(pDir);
+
+  				struct message* LIST_REPLY;
+  				const int header_size = 15;
+  				strcpy(LIST_REPLY -> protocol , "myftp");
+  				LIST_REPLY -> type = 0xA2;
+  				LIST_REPLY -> length = header_size + strlen(lsentry);
+   				if((send(client_sd,&LIST_REPLY,sizeof(struct message),0)) < 0 ){
+   					printf("Send Error!");
+   				}
+   				if(send(client_sd,lsentry,strlen(lsentry)+1,0) < 0){
+   					printf("Send Error!");
+  				}
+
+   				free(lsentry);
+
   				}
 
 		}
