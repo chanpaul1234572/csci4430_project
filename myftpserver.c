@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<unistd.h>
 #include<string.h>
+#include<dirent.h>
 #include<signal.h>
 #include<errno.h>
 #include<sys/types.h>
@@ -35,9 +36,32 @@ void clientconnection(int client_sd){
 	if((len = recv(client_sd,buf,sizeof(buf),0)) < 0){
 		printf("Receive Error!");
 	}else{
-		if(buf->type == 0xA1){
-				//list
-			//working..
+		if(buf->type == 0xA1){ //list
+				struct dirent *pStEntry = NULL;
+				struct dirent *pStResult = NULL;
+				pStEntry = malloc(sizeof(struct dirent));
+  	 			pStResult = malloc(sizeof(struct dirent));
+
+				DIR *pDir;
+				char temp[1024];
+				char *lsentry = malloc(sizeof(char) * 1024);
+				pDir = opendir("./data");
+				if(NULL == pDir){
+     				perror("Opendir failed!\n");
+      				return 1;
+ 	 			}
+ 	 			while(!readdir_r(pDir, pStEntry, &pStResult) && pStResult != NULL){
+  					if((strcmp(pStEntry->d_name, ".") != 0) && (strcmp(pStEntry->d_name, "..") != 0)){
+  						strcpy(temp,pStEntry->d_name);
+  			    		strcat(lsentry,temp);
+  			    		strcat(lsentry,"\n");
+  					}
+  					free(pStEntry);
+  					free(pStResult);
+  					closedir(pDir);
+  					
+  				}
+
 		}
 		else
 			if(buf->type == 0xB1){	//get
