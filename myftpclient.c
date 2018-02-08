@@ -33,7 +33,7 @@ int sendMsg(int sd, char *buff, int len)
 	return 0;
 }
 
-void request_prepare(struct message* message_to_send, char* cmd, char* file, int payload_size){
+void request_prepare(struct message_s* message_to_send, char* cmd, int payload_size){
 	const int header_size = 15;
 	strcpy(message_to_send -> protocol , "myftp");
 	if(strcmp("list", cmd) == 0){
@@ -46,7 +46,7 @@ void request_prepare(struct message* message_to_send, char* cmd, char* file, int
 	}
 	else if(strcmp("PUT", cmd) == 0){
 		message_to_send -> type = 0xC1;
-		messgae_to_send -> length = header_size + payload_size;
+		message_to_send -> length = header_size + payload_size;
 	}
 }
 
@@ -58,11 +58,11 @@ int main(int argc, char** argv){
 		}
 		const int port = atoi(argv[2]);
 		int sd = socket(AF_INET, SOCK_STREAM, 0);
+		char pathname[100] = "\0";
+		FILE* file = NULL;		
 		if(strcmp(argv[3], "list") != 0){
-				char pathname[100] = "\0";
 				strcat("./", pathname);
 				strcat(pathname, argv[4]);
-				FILE* file = NULL;		
 				file = fopen(pathname, "r");
 				if(!file){
 						printf("Can not open file: %s\n", strerror(errno));
@@ -70,7 +70,7 @@ int main(int argc, char** argv){
 				}
 		}
 		else{
-				pathname[0] = "\0";
+				pathname[0] = '\0';
 		}
 		char *cmd = argv[3];
 		char* ipstr = argv[1];
@@ -92,16 +92,17 @@ int main(int argc, char** argv){
 		while(1){
 			struct message_s message_to_send;
 			long lsize = size_of_the_file(file);
-			request_prepare(&message_to_send, cmd, file, lsize);
+			request_prepare(&message_to_send, cmd, lsize);
 			char* buf = NULL;
 			char end[4] = "\0";
 			buf = (char*) malloc(sizeof(message));
 			long hsize = sizeof(message);
+			printf("%ld\n", hsize);
 			bzero(buf, sizeof(message));
-			memcpy(buf, message_to_send.protocol, sizeof(message_to_send.protocol));
-			memcpy(buf + sizeof(message_to_send.protocol), message_to_send.type, sizeof(message_to_send.type));
-			memcpy(buf + (sizeof(message_to_send.protocol) + sizeof(message_to_send.type), message_to_send.length, sizeof(message_to_send.length)));
-			printf("Size of buf : %d\n", sizeof(buf));
+			memcpy(buf, &(message_to_send.protocol), sizeof(message_to_send.protocol));
+			memcpy(buf + sizeof(message_to_send.protocol), &(message_to_send.type), sizeof(message_to_send.type));
+			memcpy(buf + (sizeof(message_to_send.protocol) + sizeof(message_to_send.type)), &(message_to_send.length), sizeof(message_to_send.length));
+			printf("Size of buf : %ld\n", sizeof(buf));
 			getchar();
 			long sent_size = 0;
 			if(hsize > (sent_size = send(sd, buf, hsize, 0))){
@@ -117,7 +118,7 @@ int main(int argc, char** argv){
 					printf("Send successfully!\n");
 			}
 		fgets(end, 4, stdin);
-		if(strcmp(end. "end") == 0){
+		if(strcmp(end, "end") == 0){
 				printf("end\n");
 				close(sd);
 				printf("Connection closed\n");
