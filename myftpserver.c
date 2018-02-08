@@ -178,7 +178,7 @@ void *workerthread(void *x){
 		printf("%s\n",tempo2);
 		while(1){
 		// numbytes = read(new_fd, buf, sizeof(buf));
-			numbytes = recv(accept_fd,dat,100000,0);
+			numbytes = recv(accept_fd,dat,sizeof(dat),0);
 			printf("numbytes: %d\n",numbytes);
 			// printf("read %d bytes, ", numbytes);
 			if(numbytes == 0){
@@ -204,10 +204,10 @@ int main(int argc,char** argv){
 	port = atoi(argv[1]); //port num receive 
 	pthread_t threadid[999]; 
 	sd = socket(AF_INET, SOCK_STREAM, 0);
-	if(setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(long))==-1){ //portreusable
-		printf("setsockopt error\n");
-		exit(1);
-	}
+	// if(setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(long))==-1){ //portreusable
+	// 	printf("setsockopt error\n");
+	// 	exit(1);
+	// }
 	int *clientsd_p[999]; //clinet socket descriptor pointer
 	int client_sd[999], buf; 
 	struct sockaddr_in server_addr, client_addr;
