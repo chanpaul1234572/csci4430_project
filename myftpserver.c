@@ -18,16 +18,17 @@ int sd; //server sd
 
 void *workerthread(void *x){
 	int accept_fd = *(int *)x;
-	struct message* REQUEST;
+	struct message_s* REQUEST;
 	struct stat filestat;
 	char dat[1000000];
 	FILE *fp;
 	int numbytes;
+	const int header_size = 15;
 	char filename[1000];
 
 	if(recv(accept_fd,REQUEST,sizeof(REQUEST),0) < 0){
 		printf("Receive Error");
-		pthread_exit(null);
+		pthread_exit(NULL);
 	}
 	if(REQUEST->type == 0xA1){
 		struct dirent *pStEntry = NULL;
@@ -58,12 +59,11 @@ void *workerthread(void *x){
   		free(pStResult);
   		closedir(pDir);
 
-  		struct message* LIST_REPLY;
-  		const int header_size = 15;
+  		struct message_s* LIST_REPLY;
   		strcpy(LIST_REPLY -> protocol , "myftp");
   		LIST_REPLY -> type = 0xA2;
   		LIST_REPLY -> length = header_size + strlen(lsentry);
-   		if((send(accept_fd,&LIST_REPLY,sizeof(struct message),0)) < 0 ){
+   		if((send(accept_fd,&LIST_REPLY,sizeof(struct message_s),0)) < 0 ){
    			printf("Send Error!");
    		}	
    		else if(send(accept_fd,lsentry,strlen(lsentry)+1,0) < 0){
@@ -77,34 +77,34 @@ void *workerthread(void *x){
 	//////////////GET///////////////////////
 
 	else if (REQUEST->type == 0xB1){
-		struct message* GET_REPLY;
-		struct message* FILE_DATA;
+		struct message_s* GET_REPLY;
+		struct message_s* FILE_DATA;
 		const int header_size = 15;
   		strcpy(GET_REPLY -> protocol , "myftp");
 
 		if(recv(accept_fd,filename,sizeof(char),0) < 0){
 			printf("filename receive error");
-			pthread_exit(null);
+			pthread_exit(NULL);
 		}
 		if ( lstat(filename, &filestat) < 0){
-			pthread_exit(null);
+			pthread_exit(NULL);
 		}
 
-		if( access( fname, F_OK ) != -1 ) {
+		if( access( filename, F_OK ) != -1 ) {
   			GET_REPLY -> type = 0xB2;
   			GET_REPLY -> length = header_size;
-  			send(accept_fd,&GET_REPLY,sizeof(struct message),0)
+  			send(accept_fd,&GET_REPLY,sizeof(struct message_s),0);
 		} else {
    			GET_REPLY -> type = 0xB3;
   			GET_REPLY -> length = header_size;
-  			send(accept_fd,&GET_REPLY,sizeof(struct message),0)
+  			send(accept_fd,&GET_REPLY,sizeof(struct message_s),0);
 		}
 
 		fp = fopen(filename, "rb");
 
 		FILE_DATA -> type = 0xFF;
   		FILE_DATA -> length = header_size + (int)(filestat.st_size);
-  		send(accept_fd,&FILE_DATA,sizeof(struct message),0)
+  		send(accept_fd,&FILE_DATA,sizeof(struct message_s),0);
 
 		while(!feof(fp)){
 		numbytes = fread(dat, sizeof(char), sizeof(dat), fp);
@@ -121,29 +121,29 @@ void *workerthread(void *x){
 	//////////////PUT///////////////////////
 
 	else if (REQUEST->type == 0xC1){
-		struct message* PUT_REPLY;
-		struct message* FILE_DATA_PUT;
+		struct message_s* PUT_REPLY;
+		struct message_s* FILE_DATA_PUT;
 		{
 			
 		};
 
 		if(recv(accept_fd,filename,sizeof(char),0) < 0){
 			printf("filename receive error");
-			pthread_exit(null);
+			pthread_exit(NULL);
 		}
 
 		PUT_REPLY -> type = 0xC2;
   		PUT_REPLY -> length = header_size;
-  		send(accept_fd,&PUT_REPLY,sizeof(struct message),0)
+  		send(accept_fd,&PUT_REPLY,sizeof(struct message_s),0);
 
-  		if(recv(accept_fd,FILE_DATA_PUT,sizeof(struct message),0) < 0){
+  		if(recv(accept_fd,FILE_DATA_PUT,sizeof(struct message_s),0) < 0){
 			printf("file receive error");
-			pthread_exit(null);
+			pthread_exit(NULL);
 		}
 
 		if ((fp = fopen(filename, "wb")) == NULL){
 			perror("fopen");
-			pthread_exit(null);
+			pthread_exit(NULL);
 		}
 		while(1){
 		// numbytes = read(new_fd, buf, sizeof(buf));
@@ -176,7 +176,7 @@ int main(int argc,char** argv){
 	int client_sd[999], buf; 
 	struct sockaddr_in server_addr, client_addr;
 	unsigned int addrlen = sizeof(client_addr);
-	struct message* message_to_send;
+	struct message_s* message_s_to_send;
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
