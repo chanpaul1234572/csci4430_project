@@ -19,7 +19,7 @@ int main(){
 	char buf[1000000];
 	struct sockaddr_in my_addr;
 	struct sockaddr_in their_addr;
-	struct stat filestat;
+	// struct stat filestat;
 	FILE *fp;
 
 	//TCP socket
@@ -45,29 +45,52 @@ int main(){
 		perror("listen");
 		exit(1);
 	}
-
-	//Get file stat
-	if ( lstat("checkmate.mp3", &filestat) < 0){
-		exit(1);
-	}
-	printf("The file size is %lu \n", filestat.st_size);
-
-	fp = fopen("checkmate.mp3", "rb");
-
-	//Connect
+    
+    	//Connect
 	if ( (new_fd = accept(sockfd, (struct sockaddr*)&their_addr, &sin_size)) == -1 ){
 		perror("accept");
 		exit(1);
 	}
-
-	//Sending file
-	while(!feof(fp)){
-		numbytes = fread(buf, sizeof(char), sizeof(buf), fp);
-		printf("fread %d bytes, ", numbytes);
-		numbytes = send(new_fd, buf, numbytes,0);
-		printf("Sending %d bytesn",numbytes);
+		//Open file
+	if ( (fp = fopen("RECV.MP3", "wb")) == NULL){
+		perror("fopen");
+		exit(1);
+	}
+    //Receive file from client
+	while(1){
+		// numbytes = read(new_fd, buf, sizeof(buf));
+		numbytes = recv(new_fd,buf,sizeof(buf),0);
+		printf("read %d bytes, ", numbytes);
+		if(numbytes == 0){
+			break;
+		}
+		numbytes = fwrite(buf, sizeof(char), numbytes, fp);
+		printf("fwrite %d bytes\n", numbytes);
 	}
 
+
+	// //Get file stat
+	// if ( lstat("checkmate.mp3", &filestat) < 0){
+	// 	exit(1);
+	// }
+	// printf("The file size is %lun", filestat.st_size);
+
+	// fp = fopen("checkmate.mp3", "rb");
+
+	// //Connect
+	// if ( (new_fd = accept(sockfd, (struct sockaddr*)&their_addr, &sin_size)) == -1 ){
+	// 	perror("accept");
+	// 	exit(1);
+	// }
+
+	// //Sending file
+	// while(!feof(fp)){
+	// 	numbytes = fread(buf, sizeof(char), sizeof(buf), fp);
+	// 	printf("fread %d bytes, ", numbytes);
+	// 	numbytes = write(new_fd, buf, numbytes);
+	// 	printf("Sending %d bytesn",numbytes);
+	// }
+    fclose(fp);
 	close(new_fd);
 	close(sockfd);
 	return 0;
