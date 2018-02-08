@@ -18,154 +18,157 @@ int sd; //server sd
 
 void *workerthread(void *x){
 	int accept_fd = *(int *)x;
-	struct message_s* REQUEST;
+	printf("client sd - %d\n", accept_fd);
+	struct message_s* REQUEST = NULL;
 	struct stat filestat;
 	char dat[100000];
 	FILE *fp;
 	int numbytes;
 	const int header_size = 15;
 	char filename[1000];
-	REQUEST = malloc(sizeof(struct message_s*));
-
-	if(recv(accept_fd,REQUEST,sizeof(struct message_s*),0) < 0){
+	REQUEST = (struct message_s*) malloc(sizeof(struct message_s));
+	printf("request ptr: %p\n", REQUEST);
+	if(recv(accept_fd,REQUEST,sizeof(struct message_s),0) < 0){
 		printf("Receive Error");
 		pthread_exit(NULL);
 	}
 	else{
 	printf("Receive Header\n");
+	printf("%s\n", REQUEST->protocol);
+	printf("accept_fd:%d\n", accept_fd);
 	printf("%x",REQUEST->type);
 	fflush(stdout);
     }
 	if(REQUEST->type == 0xA1){
 		printf("LIST receive!");
-	// 	struct dirent *pStEntry = NULL;
-	// 	struct dirent *pStResult = NULL;
-	// 	DIR *pDir;
-	// 	char temp[1024];
-	// 	// char *lsentry = malloc(sizeof(char) * 1024);
-	// 	char *lsentry = NULL;
-	// 	lsentry = (char *)malloc(1000);
-	// 	pDir = opendir("./data");
+		struct dirent *pStEntry = NULL;
+		struct dirent *pStResult = NULL;
+		DIR *pDir;
+		char temp[1024];
+		// char *lsentry = malloc(sizeof(char) * 1024);
+		char *lsentry = NULL;
+		lsentry = (char *)malloc(1000);
+		pDir = opendir("./data");
 
-	 //  	if(NULL == pDir){
-  //    	printf("Opendir failed!\n");
-  //     	return 0;
- 	//  	}
+	  	if(NULL == pDir){
+     	printf("Opendir failed!\n");
+      	return 0;
+ 	 	}
 
- 	//  	pStEntry = malloc(sizeof(struct dirent));
-  // 	 	pStResult = malloc(sizeof(struct dirent));
-  // 		while(! readdir_r(pDir, pStEntry, &pStResult) && pStResult != NULL)
-  // 		{
-  // 			if((strcmp(pStEntry->d_name, ".") != 0) && (strcmp(pStEntry->d_name, "..") != 0)){
-  // 				strcpy(temp,pStEntry->d_name);
-  // 			    strcat(lsentry,temp);
-  // 			    strcat(lsentry,"\n");
-  // 			}
-		// }
-		// strcat(lsentry,"\0");
-  // 		// printf("%s",lsentry);
-  // 		free(pStEntry);
-  // 		free(pStResult);
-  // 		closedir(pDir);
+ 	 	pStEntry = malloc(sizeof(struct dirent));
+  	 	pStResult = malloc(sizeof(struct dirent));
+  		while(! readdir_r(pDir, pStEntry, &pStResult) && pStResult != NULL)
+  		{
+  			if((strcmp(pStEntry->d_name, ".") != 0) && (strcmp(pStEntry->d_name, "..") != 0)){
+  				strcpy(temp,pStEntry->d_name);
+  			    strcat(lsentry,temp);
+  			    strcat(lsentry,"\n");
+  			}
+		}
+		strcat(lsentry,"\0");
+  		// printf("%s",lsentry);
+  		free(pStEntry);
+  		free(pStResult);
+  		closedir(pDir);
 
-  // 		struct message_s* LIST_REPLY;
-  // 		strcpy(LIST_REPLY -> protocol , "myftp");
-  // 		LIST_REPLY -> type = 0xA2;
-  // 		LIST_REPLY -> length = header_size + strlen(lsentry);
-  //  		if((send(accept_fd,&LIST_REPLY,sizeof(struct message_s),0)) < 0 ){
-  //  			printf("Send Error!");
-  //  		}	
-  //  		else if(send(accept_fd,lsentry,strlen(lsentry)+1,0) < 0){
-  //  			 printf("Send Error!");
-  //  		}
-  //  		free(lsentry);
+  		struct message_s* LIST_REPLY;
+  		strcpy(LIST_REPLY -> protocol , "myftp");
+  		LIST_REPLY -> type = 0xA2;
+  		LIST_REPLY -> length = header_size + strlen(lsentry);
+   		if((send(accept_fd,&LIST_REPLY,sizeof(struct message_s),0)) < 0 ){
+   			printf("Send Error!");
+   		}	
+   		else if(send(accept_fd,lsentry,strlen(lsentry)+1,0) < 0){
+   			 printf("Send Error!");
+   		}
+   		free(lsentry);
 	}
 
-	// ///////////////////////////////////////////
-	// //////////////////////////////////////////
-	// //////////////GET///////////////////////
+	///////////////////////////////////////////
+	//////////////////////////////////////////
+	//////////////GET///////////////////////
 
-	// else if (REQUEST->type == 0xB1){
-	// 	struct message_s* GET_REPLY;
-	// 	struct message_s* FILE_DATA;
-	// 	const int header_size = 15;
- //  		strcpy(GET_REPLY -> protocol , "myftp");
+	else if (REQUEST->type == 0xB1){
+		struct message_s* GET_REPLY;
+		struct message_s* FILE_DATA;
+		const int header_size = 15;
+  		strcpy(GET_REPLY -> protocol , "myftp");
 
-	// 	if(recv(accept_fd,filename,sizeof(char),0) < 0){
-	// 		printf("filename receive error");
-	// 		pthread_exit(NULL);
-	// 	}
-	// 	if ( lstat(filename, &filestat) < 0){
-	// 		pthread_exit(NULL);
-	// 	}
+		if(recv(accept_fd,filename,sizeof(char),0) < 0){
+			printf("filename receive error");
+			pthread_exit(NULL);
+		}
+		if ( lstat(filename, &filestat) < 0){
+			pthread_exit(NULL);
+		}
 
-	// 	if( access( filename, F_OK ) != -1 ) {
- //  			GET_REPLY -> type = 0xB2;
- //  			GET_REPLY -> length = header_size;
- //  			send(accept_fd,&GET_REPLY,sizeof(struct message_s),0);
-	// 	} else {
- //   			GET_REPLY -> type = 0xB3;
- //  			GET_REPLY -> length = header_size;
- //  			send(accept_fd,&GET_REPLY,sizeof(struct message_s),0);
-	// 	}
+		if( access( filename, F_OK ) != -1 ) {
+  			GET_REPLY -> type = 0xB2;
+  			GET_REPLY -> length = header_size;
+  			send(accept_fd,&GET_REPLY,sizeof(struct message_s),0);
+		} else {
+   			GET_REPLY -> type = 0xB3;
+  			GET_REPLY -> length = header_size;
+  			send(accept_fd,&GET_REPLY,sizeof(struct message_s),0);
+		}
 
-	// 	fp = fopen(filename, "rb");
+		fp = fopen(filename, "rb");
 
-	// 	FILE_DATA -> type = 0xFF;
- //  		FILE_DATA -> length = header_size + (int)(filestat.st_size);
- //  		send(accept_fd,&FILE_DATA,sizeof(struct message_s),0);
+		FILE_DATA -> type = 0xFF;
+  		FILE_DATA -> length = header_size + (int)(filestat.st_size);
+  		send(accept_fd,&FILE_DATA,sizeof(struct message_s),0);
 
-	// 	while(!feof(fp)){
-	// 	numbytes = fread(dat, sizeof(char), sizeof(dat), fp);
-	// 	// printf("fread %d bytes, ", numbytes);
-	// 	numbytes = send(accept_fd, dat, numbytes,0);
-	// 	// printf("Sending %d bytesn",numbytes);
-	// 	}
-	// 	fclose(fp);
+		while(!feof(fp)){
+		numbytes = fread(dat, sizeof(char), sizeof(dat), fp);
+		// printf("fread %d bytes, ", numbytes);
+		numbytes = send(accept_fd, dat, numbytes,0);
+		// printf("Sending %d bytesn",numbytes);
+		}
+		fclose(fp);
 
-	// }
+	}
 
-	// ///////////////////////////////////////////
-	// //////////////////////////////////////////
-	// //////////////PUT///////////////////////
+	///////////////////////////////////////////
+	//////////////////////////////////////////
+	//////////////PUT///////////////////////
 
-	// else if (REQUEST->type == 0xC1){
-	// 	struct message_s* PUT_REPLY;
-	// 	struct message_s* FILE_DATA_PUT;
-	// 	{
+	else if (REQUEST->type == 0xC1){
+		struct message_s* PUT_REPLY;
+		struct message_s* FILE_DATA_PUT;
+		{
 			
-	// 	};
+		};
 
-	// 	if(recv(accept_fd,filename,sizeof(char),0) < 0){
-	// 		printf("filename receive error");
-	// 		pthread_exit(NULL);
-	// 	}
+		if(recv(accept_fd,filename,sizeof(char),0) < 0){
+			printf("filename receive error");
+			pthread_exit(NULL);
+		}
 
-	// 	PUT_REPLY -> type = 0xC2;
- //  		PUT_REPLY -> length = header_size;
- //  		send(accept_fd,&PUT_REPLY,sizeof(struct message_s),0);
+		PUT_REPLY -> type = 0xC2;
+  		PUT_REPLY -> length = header_size;
+  		send(accept_fd,&PUT_REPLY,sizeof(struct message_s),0);
 
- //  		if(recv(accept_fd,FILE_DATA_PUT,sizeof(struct message_s),0) < 0){
-	// 		printf("file receive error");
-	// 		pthread_exit(NULL);
-	// 	}
+  		if(recv(accept_fd,FILE_DATA_PUT,sizeof(struct message_s),0) < 0){
+			printf("file receive error");
+			pthread_exit(NULL);
+		}
 
-	// 	if ((fp = fopen(filename, "wb")) == NULL){
-	// 		perror("fopen");
-	// 		pthread_exit(NULL);
-	// 	}
-	// 	while(1){
-	// 	// numbytes = read(new_fd, buf, sizeof(buf));
-	// 		numbytes = recv(accept_fd,dat,sizeof(dat),0);
-	// 		// printf("read %d bytes, ", numbytes);
-	// 		if(numbytes == 0){
-	// 			break;
-	// 		}
-	// 		numbytes = fwrite(dat, sizeof(char), numbytes, fp);
-	// 		// printf("fwrite %d bytes\n", numbytes);
-	// 	}
-	// 	fclose(fp);
-	// }
+		if ((fp = fopen(filename, "wb")) == NULL){
+			perror("fopen");
+			pthread_exit(NULL);
+		}
+		while(1){
+		// numbytes = read(new_fd, buf, sizeof(buf));
+			numbytes = recv(accept_fd,dat,sizeof(dat),0);
+			// printf("read %d bytes, ", numbytes);
+			if(numbytes == 0){
+				break;
+			}
+			numbytes = fwrite(dat, sizeof(char), numbytes, fp);
+			// printf("fwrite %d bytes\n", numbytes);
+		}
+		fclose(fp);
+	}
 	close(accept_fd);
 	pthread_exit(NULL);
 }
