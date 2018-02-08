@@ -2,7 +2,6 @@
 #include<stdlib.h>
 #include<unistd.h>
 #include<string.h>
-#include<dirent.h>
 #include<signal.h>
 #include<errno.h>
 #include<sys/types.h>
@@ -12,120 +11,37 @@
 #include<arpa/inet.h>
 #include<pthread.h>
 #include<dirent.h>
-#include "myftp.h" 
+// #include "myftp.h" 
 
-/*
-->error log change later
-->listen() max pending N ...?
-header 10bytes 514bits
-*/
-void *workerthread(void *);
-int client_connection(int x);
+int sd;
+void clientconnection(void *x, int y);
 
-void *workerthread(void *clientsd_p){
-	int client_sd = *(int*) clientsd_p; 
-	char message[20] = "hello client";
-	write(client_sd, message, strlen(message));
-    pthread_detach(pthread_self());
-	client_connection(client_sd);		//handlle client connection 
-	free(clientsd_p);
-	return(NULL);
+void *workerthread(void *x){
+	int accept_fd = *(int *)x;
+
+	// int **client_sd = &clientsd_p;
+	 // printf("hello handling client - %p \n", clientsd_pp);
+	// free(clientsd_p);
+    // pthread_detach(pthread_self());
+	 printf("server_sd=%d\n", accept_fd);
+	// clientconnection((void*)clientsd_pp, sd); //handlle client connection 
 }
 
 //Handling client requests
-void clientconnection(int client_sd){
+void clientconnection(void *clientsd_pp, int sd){
+	printf("blocking session for %p\n", clientsd_pp);
 	const int header_size = 15;
-	if((len = recv(client_sd,buf,sizeof(buf),0)) < 0){
-		printf("Receive Error!");
-	}else{
-		if(buf->type == 0xA1){ //list
-				struct dirent *pStEntry = NULL;
-				struct dirent *pStResult = NULL;
-				pStEntry = malloc(sizeof(struct dirent));
-  	 			pStResult = malloc(sizeof(struct dirent));
-
-				DIR *pDir;
-				char temp[1024];
-				char *lsentry = malloc(sizeof(char) * 1024);
-				pDir = opendir("./data");
-				if(NULL == pDir){
-     				perror("Opendir failed!\n");
-      				return 1;
- 	 			}
- 	 			while(!readdir_r(pDir, pStEntry, &pStResult) && pStResult != NULL){
-  					if((strcmp(pStEntry->d_name, ".") != 0) && (strcmp(pStEntry->d_name, "..") != 0)){
-  						strcpy(temp,pStEntry->d_name);
-  			    		strcat(lsentry,temp);
-  			    		strcat(lsentry,"\n");
-  					}
-  				strcat(lsentry,"\0");
-  				free(pStEntry);
-  				free(pStResult);
-  				closedir(pDir);
-
-  				struct message* LIST_REPLY;
-  				const int header_size = 15;
-  				strcpy(LIST_REPLY -> protocol , "myftp");
-  				LIST_REPLY -> type = 0xA2;
-  				LIST_REPLY -> length = header_size + strlen(lsentry);
-   				if((send(client_sd,&LIST_REPLY,sizeof(struct message),0)) < 0 ){
-   					printf("Send Error!");
-   				}
-   				if(send(client_sd,lsentry,strlen(lsentry)+1,0) < 0){
-   					printf("Send Error!");
-  				}
-
-   				free(lsentry);
-
-  				}
-
-		}
-		else
-			if(buf->type == 0xB1){	//get
-				FILE *fp;
-				char fname[100];
-				char server_path[8] = "./data "; 
-				char fpath[108];
-				fpath = strcat(server_path,fname);
-				//reply GET_REPLY
-				if(fp = fopen(fpath ,"r")!=NULL){  /
-					printf("File doesn't exists\n");
-					message_to_send -> type = 0xB3;
-					message_to_send -> length = header_size;
-					if(send(client_sd, message_to_send,sizeof(message_to_send),0)==-1){
-					perror("sending error");
-					}
-				}else{
-					printf("File:%s exists, prepare for download\n");
-					message_to_send -> type = 0xB2;
-					message_to_send -> length = header_size;
-					if(send(client_sd, message_to_send,sizeof(message_to_send),0)==-1){
-						perror("sending error");
-					}
-					//FILE-DATA
-					message_to_send -> type = 0xFF;
-					message_to_send -> length = header_size + file_size;
-					message_to_send-> payload = file; //?
-					if(send(client_sd, message_to_send,sizeof(message_to_send),0)==-1){
-					perror("sending file error");
-					}
-
-					fclose(fp);
-				}
-			}
-		else
-			if(buf->type == 0xC1){	//put
-
-				//reply PUT_REPLY
-
-				//wait for FILE_DATA
-			}
-		else
-			printf("Wrong request!");
+	int recedata;
+	char buf[10000];
+	int clientsd = *(int*)clientsd_pp;
+	if((recedata = recv(clientsd,buf,sizeof(buf),0)) < 0){
+		printf("Receive Error!\n"); 
 	}
+	printf("%s", buf);
+
+	close(clientsd);
+	free(clientsd_pp);
 	pthread_exit(NULL);
-	close(sd);
-	return 0;
 }
 
 int main(int argc,char** argv){
@@ -137,15 +53,15 @@ int main(int argc,char** argv){
 		exit(1);
 	}	
 	port = atoi(argv[1]); //port num receive 
-	pthread_t threadid; 
-	int *clientsd_p; //clinet socket descriptor pointer
-	int sd = socket(AF_INET, SOCK_STREAM, 0);
-	int client_sd, buf; 
+	pthread_t threadid[999]; 
+	sd = socket(AF_INET, SOCK_STREAM, 0);
+	int *clientsd_p[999]; //clinet socket descriptor pointer
+	int client_sd[999], buf; 
 	struct sockaddr_in server_addr, client_addr;
 	unsigned int addrlen = sizeof(client_addr);
 	struct message* message_to_send;
 	memset(&server_addr, 0, sizeof(server_addr));
-	server_addr.sin.family = AF_INET;
+	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	server_addr.sin_port = htons(port);
 
@@ -160,29 +76,33 @@ int main(int argc,char** argv){
 	}
 	int connection_count=0;
 	//accept 
-		while(client_sd = accept(sd, (struct sockaddr*) &client_addr, &addrlen)==0){
+	for(int i=1; i <=999; i++){
+		//loop
+		printf("--------Press crtl+c to stop the server---------\n");
 
-		// if(client_sd = accept(sd, (struct sockaddr*) &client_addr, &addrlen)==-1){
-		// 		printf("Accept error: %s (Errno:%d)\n", strerror(errno), errno);
-		// 		exit(0);
-		// }else{
+		if((client_sd[i] = accept(sd, (struct sockaddr*) &client_addr, &addrlen))==-1){
+			printf("Accept error: %s (Errno:%d)\n", strerror(errno), errno);
+			exit(0);
+		}else{
 			//open worker thread
-			// connection_count++;
-			// printf("count->%d", connection_count);
-			printf("\n");
-			printf("hello\n");
+			connection_count++;
+			printf("count->%d i=%d\n", connection_count,i);
+			// printf("server sd:%d\n", sd );
+			// clientsd_p[i] = malloc(sizeof(client_sd));
+			printf("client sd:%d\n", client_sd[i]);
+			// *clientsd_p[i] = client_sd[i];
+			// *clientsd_p[i] = client_sd[i];
+			// printf("pointer - %p\n", (void *)clientsd_p[i]); 
+			// printf("pointer stored value - %d\n", clientsd_p[i]);
+
 			// buf = ntohl(buf);
-			clientsd_p = malloc(sizeof(int)); 
-			*clientsd_p = client_sd;
-			if(pthread_create(&threadid, NULL, workerthread, (void*)clientsd_p)==-1){
+			if(pthread_create(&threadid[i], NULL, workerthread,&client_sd[i])!=0){
 				printf("create thread error: %s (Errno:%d)\n", strerror(errno), errno);
-				free(clientsd_p);
-				close(client_sd);
-				pthread_exit(NULL);
-			// }
+
+			}
 		}
 	}
-	printf("exit!");
 	close(sd);
 	return 0;
-}
+	}
+	
