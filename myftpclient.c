@@ -55,6 +55,8 @@ int main(int argc, char **argv)
 	FILE *GETFILE = NULL;
 	if (strcmp(argv[3], "put") == 0)
 	{
+		bzero(pathname, 100);
+		strcat(pathname, "./");
 		strcat(pathname, argv[4]);
 		printf("pathname: %s\n", pathname);
 		file = fopen(pathname, "r");
@@ -66,7 +68,7 @@ int main(int argc, char **argv)
 	}
 	else if (strcmp(argv[3], "get") == 0)
 	{
-		strcat(pathname, argv[4]);
+				strcat(pathname, argv[4]);
 		printf("pathname: %s\n", pathname);
 	}
 	else

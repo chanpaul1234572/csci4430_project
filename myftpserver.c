@@ -153,7 +153,7 @@ void *workerthread(void *x){
 		PUT_REPLY = (struct message_s*) malloc(10);
 		FILE_DATA_PUT = (struct message_s*) malloc(10);
 
-		if(recv(accept_fd,filename,sizeof(char),0) < 0){
+		if(recv(accept_fd,filename,sizeof(char)*100,0) < 0){
 			printf("filename receive error");
 			pthread_exit(NULL);
 		}
@@ -166,19 +166,25 @@ void *workerthread(void *x){
 			printf("file receive error");
 			pthread_exit(NULL);
 		}
-
-		if ((fp = fopen(filename, "wb")) == NULL){
+		char tempo[100];
+		memcpy(tempo, filename + 2, strlen(filename)-2);
+		tempo[strlen(filename)-2] = '\0';
+		char tempo2[100] = "./data/";
+		strcat(tempo2,tempo);
+		if ((fp = fopen(tempo2, "wb")) == NULL){
 			perror("fopen");
 			pthread_exit(NULL);
 		}
+		printf("%s\n",tempo2);
 		while(1){
 		// numbytes = read(new_fd, buf, sizeof(buf));
-			numbytes = recv(accept_fd,dat,sizeof(dat),0);
+			numbytes = recv(accept_fd,dat,100000,0);
+			printf("numbytes: %d\n",numbytes);
 			// printf("read %d bytes, ", numbytes);
 			if(numbytes == 0){
 				break;
 			}
-			numbytes = fwrite(dat, sizeof(dat), numbytes, fp);
+			numbytes = fwrite(dat, sizeof(char), numbytes, fp);
 			// printf("fwrite %d bytes\n", numbytes);
 		}
 		fclose(fp);
