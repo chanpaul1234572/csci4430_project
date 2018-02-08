@@ -162,7 +162,7 @@ void *workerthread(void *x){
 }
 
 int main(int argc,char** argv){
-
+	long val = 1 ;
 	unsigned short port;
 
 	if(argc != 2){
@@ -172,6 +172,10 @@ int main(int argc,char** argv){
 	port = atoi(argv[1]); //port num receive 
 	pthread_t threadid[999]; 
 	sd = socket(AF_INET, SOCK_STREAM, 0);
+	if(setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(long))==-1){ //portreusable
+		printf("setsockopt error\n");
+		exit(1);
+	}
 	int *clientsd_p[999]; //clinet socket descriptor pointer
 	int client_sd[999], buf; 
 	struct sockaddr_in server_addr, client_addr;
