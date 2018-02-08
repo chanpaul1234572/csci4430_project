@@ -94,11 +94,35 @@ int main(int argc, char** argv){
 			long lsize = size_of_the_file(file);
 			request_prepare(&message_to_send, cmd, file, lsize);
 			char* buf = NULL;
+			char end[4] = "\0";
 			buf = (char*) malloc(sizeof(message));
+			long hsize = sizeof(message);
+			bzero(buf, sizeof(message));
 			memcpy(buf, message_to_send.protocol, sizeof(message_to_send.protocol));
 			memcpy(buf + sizeof(message_to_send.protocol), message_to_send.type, sizeof(message_to_send.type));
-			memcpy(buf + (sizeof(message_to_send.protocol) + sizeof(message_to_send.type), message_to_send.length, sizeof(message_to_send.length));
+			memcpy(buf + (sizeof(message_to_send.protocol) + sizeof(message_to_send.type), message_to_send.length, sizeof(message_to_send.length)));
+			printf("Size of buf : %d\n", sizeof(buf));
+			getchar();
+			long sent_size = 0;
+			if(hsize > (sent_size = send(sd, buf, hsize, 0))){
+					if(sent_size < 0){
+						printf("Send failed: %s\n", (strerror(errno)));
+					}
+					else{
+							printf("Send incomplete\n");
+					}
+			}
+			else
+			{
+					printf("Send successfully!\n");
+			}
+		fgets(end, 4, stdin);
+		if(strcmp(end. "end") == 0){
+				printf("end\n");
+				close(sd);
+				printf("Connection closed\n");
 		}
+	}
 	return 0;
 }		
 
