@@ -19,14 +19,16 @@
 ->listen() max pending N ...?
 header 10bytes 514bits
 */
+void *workerthread(void *);
+int client_connection(int x);
 
-void *workerthread(int *clientsd_p){
-	int client_sd =(int*)clientsd_p; 
-	free(clientsd_p);
+void *workerthread(void *clientsd_p){
+	int client_sd = *(int*) clientsd_p; 
+	char message[20] = "hello client";
+	write(client_sd, message, strlen(message));
     pthread_detach(pthread_self());
-
-	clientconnection(client_sd); //handlle client connection 
-
+	client_connection(client_sd);		//handlle client connection 
+	free(clientsd_p);
 	return(NULL);
 }
 
@@ -158,29 +160,29 @@ int main(int argc,char** argv){
 	}
 	int connection_count=0;
 	//accept 
-	while(1){
+		while(client_sd = accept(sd, (struct sockaddr*) &client_addr, &addrlen)==0){
 
-		if(client_sd = accept(sd, (struct sockaddr*) &client_addr, &addrlen)==-1){
-				printf("Accept error: %s (Errno:%d)\n", strerror(errno), errno);
-				exit(0);
-		}else{
+		// if(client_sd = accept(sd, (struct sockaddr*) &client_addr, &addrlen)==-1){
+		// 		printf("Accept error: %s (Errno:%d)\n", strerror(errno), errno);
+		// 		exit(0);
+		// }else{
 			//open worker thread
-			connection_count++;
-			printf("count->%d", connection_count);
-			buf = ntohl(buf);
+			// connection_count++;
+			// printf("count->%d", connection_count);
+			printf("\n");
+			printf("hello\n");
+			// buf = ntohl(buf);
 			clientsd_p = malloc(sizeof(int)); 
-			clientsd_p = client_sd;
-			if(pthread_create(&threadid, NULL, workerthread, clientsd_p)==-1){
+			*clientsd_p = client_sd;
+			if(pthread_create(&threadid, NULL, workerthread, (void*)clientsd_p)==-1){
 				printf("create thread error: %s (Errno:%d)\n", strerror(errno), errno);
 				free(clientsd_p);
-				// free(client_addr);
-				close(sd);
 				close(client_sd);
 				pthread_exit(NULL);
-			}
+			// }
 		}
 	}
+	printf("exit!");
 	close(sd);
 	return 0;
-	//End of server process
 }
