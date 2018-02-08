@@ -23,7 +23,7 @@ int main(int argc, char* argv[]){
 	//Initial, connect to port 2323
 	address.sin_family = AF_INET;
 	address.sin_port = htons(2324);
-	address.sin_addr.s_addr = inet_addr("10.7.20.230");
+	address.sin_addr.s_addr = inet_addr("137.189.204.193");
 	bzero( &(address.sin_zero), 8 );
 
 	//Connect to server
