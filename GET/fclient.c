@@ -40,13 +40,13 @@ int main(int argc, char* argv[]){
 
 	//Receive file from server
 	while(1){
-		numbytes = read(sockfd, buf, sizeof(buf));
+		numbytes = recv(sockfd, buf, sizeof(buf),0);
 		printf("read %d bytes, ", numbytes);
 		if(numbytes == 0){
 			break;
 		}
 		numbytes = fwrite(buf, sizeof(char), numbytes, fp);
-		printf("fwrite %d bytesn", numbytes);
+		printf("fwrite %d bytes \n", numbytes);
 	}
 
 	fclose(fp);

@@ -50,7 +50,7 @@ int main(){
 	if ( lstat("checkmate.mp3", &filestat) < 0){
 		exit(1);
 	}
-	printf("The file size is %lun", filestat.st_size);
+	printf("The file size is %lu \n", filestat.st_size);
 
 	fp = fopen("checkmate.mp3", "rb");
 
@@ -64,7 +64,7 @@ int main(){
 	while(!feof(fp)){
 		numbytes = fread(buf, sizeof(char), sizeof(buf), fp);
 		printf("fread %d bytes, ", numbytes);
-		numbytes = write(new_fd, buf, numbytes);
+		numbytes = send(new_fd, buf, numbytes,0);
 		printf("Sending %d bytesn",numbytes);
 	}
 
