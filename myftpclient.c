@@ -45,7 +45,7 @@ void request_prepare(struct message_s* message_to_send, char* cmd, int payload_s
 		message_to_send -> type = 0xB1;
 		message_to_send -> length = header_size + payload_size;
 	}
-	else if(strcmp("PUT", cmd) == 0){
+	else if(strcmp("put", cmd) == 0){
 		message_to_send -> type = 0xC1;
 		message_to_send -> length = header_size + payload_size;
 	}
@@ -59,11 +59,11 @@ int main(int argc, char** argv){
 		}
 		const int port = atoi(argv[2]);
 		int sd = socket(AF_INET, SOCK_STREAM, 0);
-		char pathname[100] = "\0";
+		char pathname[100] = "./";
 		FILE* file = NULL;		
 		if(strcmp(argv[3], "list") != 0){
-				strcat("./", pathname);
 				strcat(pathname, argv[4]);
+				printf("%s\n", pathname);
 				file = fopen(pathname, "r");
 				if(!file){
 						printf("Can not open file: %s\n", strerror(errno));
@@ -90,14 +90,15 @@ int main(int argc, char** argv){
       		exit(0);
 		}
 		printf("connected to the server: %s\n", inet_ntoa((server_addr.sin_addr)));
+		//while(1){
 			struct message_s message_to_send;
 			long lsize = 0;
 			if(file != NULL){
 					lsize = size_of_the_file(file);
 			}		
-			printf("%ld\n", lsize);
+			printf("filesize = %ld\n", lsize);
 			request_prepare(&message_to_send, cmd, lsize);
-			printf("protocol = %s\n", message_to_send.protocol);
+			printf("protocol = %d\n", message_to_send.length);
 			char* buf = NULL;
 			char end[4] = "\0";
 			buf = (char*) malloc(sizeof(message));
@@ -109,19 +110,23 @@ int main(int argc, char** argv){
 			memcpy(buf + (sizeof(message_to_send.protocol) + sizeof(message_to_send.type)), &(message_to_send.length), sizeof(message_to_send.length));
 			printf("buf = %s", buf);
 			long sent_size = 0;
+			//send header
 			if(hsize > (sent_size = send(sd, buf, hsize, 0))){
 					if(sent_size < 0){
-						printf("Send failed: %s\n", (strerror(errno)));
+						printf("Send header failed: %s\n", (strerror(errno)));
 					}
 					else{
-						printf("Send incomplete\n");
+						printf("Send header incomplete\n");
 					}
 			}
 			else
 			{
-					printf("Send successfully!\n");
+					printf("Send header successfully!\n");
 			}
-			close(sd);
+
+		//}
+		
+		close(sd);
 	return 0;
 }		
 

@@ -52,7 +52,7 @@ int main(int argc, char** argv){
 			if(strlen(buff) != 0){
 				printf("%s\n", buff);
 				printf("len = %d\n", len);
-				printf("buff[6 -7] = %x%x\n", buff[6], buff[7]);
+				printf("buff[6 -7] = %x %x\n", buff[6], buff[7]);
 			}
 			if(strcmp("exit", buff) == 0){
 				close(client_sd);
