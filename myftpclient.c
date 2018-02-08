@@ -185,40 +185,43 @@ int main(int argc, char **argv)
 			printf("Send payload successfully! payload_size = %ld\n", payload_size);
 		}
 	}
-	int check = 1;
+	int check = 0;
 	message *reply_buf = NULL;
 	char protocol_check[6];
-	char type_check = '\0';
 	reply_buf = (message *)malloc(header_size);
 	bzero(reply_buf, header_size);
 	long revlen = 0;
 	long length_of_payload = 0;
-	if ((revlen = recv(sd, reply_buf, sizeof(reply_buf), 0)) < 0)
+	if ((revlen = recv(sd, reply_buf, header_size, 0)) < 0)
 	{
 		printf("recevie header failed\n");
 	}
 	else
 	{
-		type_check = reply_buf -> type;
-		if (type_check == 0xA2 && mode == 0)
+		printf("%x\n",reply_buf->type);
+		printf("%s\n", reply_buf -> protocol);
+		printf("%d\n", mode);
+		if (reply_buf -> type == 0xA2 && mode == 0)
 		{
 			check = 1;
 		}
-		if (type_check == 0xB2 && mode == 1)
+		if (reply_buf -> type == 0xB2 && mode == 1)
 		{
 			check = 1;
 		}
-		if (type_check == 0xC3 && mode == 2)
+		if (reply_buf -> type == 0xC2 && mode == 2)
 		{
 			check = 1;
 		}
+		printf("check = %d\n", check);
 		if (check)
 		{
 			int i = 0;
 			length_of_payload = reply_buf->length;
 			//extract the reply_buf[6]
 			length_of_payload -= 10;
-			printf("%d", length_of_payload);
+			printf("length_of_payload = %d\n", length_of_payload);
+
 
 		}
 	}

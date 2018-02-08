@@ -14,6 +14,11 @@
 int main(int argc, char **argv)
 {
 	int sd = socket(AF_INET, SOCK_STREAM, 0);
+	long val = 1;
+	if(setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(long)) == -1){
+		perror("setsockopt");
+		exit(1);
+	}
 	int client_sd;
 	struct sockaddr_in server_addr;
 	struct sockaddr_in client_addr;
@@ -28,7 +33,7 @@ int main(int argc, char **argv)
 	header.protocol[3] = 't';
 	header.protocol[4] = 'p';
 	header.length = 3000;
-	header.type = 0xC2;
+	header.type = 0xA2;
 	if (bind(sd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
 	{
 		printf("Bind error: %s (Errno:%d)\n", strerror(errno), errno);
@@ -80,7 +85,7 @@ int main(int argc, char **argv)
 	printf("%x\n", header1 -> type);
 	if ((header1->type != 0xA1))
 	{
-		if ((len = recv(client_sd, buff1, sizeof(buff1), 0)) < 0)
+		if ((len = recv(client_sd, buff1, 100, 0)) < 0)
 		{
 			printf("Receive error: %s (Errno:%d)\n", strerror(errno), errno);
 			exit(0);
@@ -99,7 +104,7 @@ int main(int argc, char **argv)
 			close(client_sd);
 		}
 	}
-	if (sizeof(header) > send(sd, &header, sizeof(header), 0))
+	if ((send(client_sd, &header, 10, 0) == 10))
 	{
 		printf("send successfully\n");
 	}
