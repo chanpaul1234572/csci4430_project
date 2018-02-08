@@ -52,16 +52,33 @@ void request_prepare(struct message* message_to_send, char* cmd, char* file, int
 
 
 int main(int argc, char** argv){
+		if(argc != 5 &&  argc != 4){
+				printf("The number of argument are not correct\n");
+				exit(0);
+		}
 		const int port = atoi(argv[2]);
 		int sd = socket(AF_INET, SOCK_STREAM, 0);
-		char pathname[100] = void;
-		strcat("./", pathname);
-		strcat(pathname, argv[4]);
-		int fd = open(pathname, O_CREAT);
+		if(strcmp(argv[3], "list") != 0){
+				char pathname[100] = "\0";
+				strcat("./", pathname);
+				strcat(pathname, argv[4]);
+				FILE* file = NULL;		
+				file = fopen(pathname, "r");
+				if(!file){
+						printf("Can not open file: %s\n", strerror(errno));
+						exit(0);
+				}
+		}
+		else{
+				pathname[0] = "\0";
+		}
+		char *cmd = argv[3];
 		char* ipstr = argv[1];
+		printf("%s", ipstr);
 		struct sockaddr_in server_addr;
 		if (sd < 0){
-				errexit("Can not create socket :%s\n", strerror(errno));
+				printf("Can not create socket :%s\n", strerror(errno));
+				exit(0);
 		}
 		memset(&server_addr, 0, sizeof(server_addr));
 		server_addr.sin_family = AF_INET;
@@ -71,7 +88,17 @@ int main(int argc, char** argv){
        		printf("connection error: %s (Errno:%d)\n", strerror(errno), errno);
       		exit(0);
 		}
-		printf("connected to the server: %s\n", inet_ntoa((server_addr.sin_addr.s_addr)));
+		printf("connected to the server: %s\n", inet_ntoa((server_addr.sin_addr)));
+		while(1){
+			struct message_s message_to_send;
+			long lsize = size_of_the_file(file);
+			request_prepare(&message_to_send, cmd, file, lsize);
+			char* buf = NULL;
+			buf = (char*) malloc(sizeof(message));
+			memcpy(buf, message_to_send.protocol, sizeof(message_to_send.protocol));
+			memcpy(buf + sizeof(message_to_send.protocol), message_to_send.type, sizeof(message_to_send.type));
+			memcpy(buf + (sizeof(message_to_send.protocol) + sizeof(message_to_send.type), message_to_send.length, sizeof(message_to_send.length));
+		}
 	return 0;
 }		
 
