@@ -1,0 +1,14 @@
+CC = gcc
+LIB = -lsocket -lnsl -m64 -lpthread
+
+all: client ser
+
+ser: myftpserver.c
+	${CC} -o myftpserver myftpserver.c ${LIB}
+
+client: myftpclient.c
+	${CC} -o myftpclient myftpclient.c ${LIB}
+
+clean:
+	rm myftpclient
+	rm myftpserver
