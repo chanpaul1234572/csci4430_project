@@ -50,13 +50,13 @@ int main(int argc, char **argv)
 	}
 	const int port = atoi(argv[2]);
 	int sd = socket(AF_INET, SOCK_STREAM, 0);
-	char pathname[100] = "./";
+	char pathname[100] = "./data/";
 	FILE *file = NULL;
 	FILE *GETFILE = NULL;
 	if (strcmp(argv[3], "put") == 0)
 	{
 		strcat(pathname, argv[4]);
-		printf("%s\n", pathname);
+		printf("pathname: %s\n", pathname);
 		file = fopen(pathname, "r");
 		if (!file)
 		{
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 	else if (strcmp(argv[3], "get") == 0)
 	{
 		strcat(pathname, argv[4]);
-		printf("%s\n", pathname);
+		printf("pathname: %s\n", pathname);
 	}
 	else
 	{
@@ -204,12 +204,15 @@ int main(int argc, char **argv)
 				printf("recevie file data header failed\n"); 		
 			}
 			else{
+				printf("receive file data header success\n");
+				printf("%d\n",length_of_payload);
 				length_of_payload = reply_buf -> length - 10;
 				payload_buf = (char*)malloc(length_of_payload);
 				if((revlen = recv(sd, payload_buf, length_of_payload, 0)) < 0){
 					printf("recevie file data failed\n");
 				}	
 				else{
+					printf("receive file data success\n");
 					GETFILE = fopen(argv[4], "wb");
 					if(GETFILE == NULL){
 						perror("failed to create file");
