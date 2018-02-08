@@ -9,6 +9,30 @@
 #include<arpa/inet.h>
 #include "myftp.h"
 
+long size_of_the_file(FILE* file){
+	long size = 0;
+	fseek(file, 0, SEEK_END);
+	size = ftell(file);
+	fseek(file, 0, SEEK_SET);
+	return size;
+}
+
+int sendMsg(int sd, char *buff, int len)
+{
+	int recvLen = 0;
+	while (recvLen != len)
+	{
+		int rLen = send(sd, buff + recvLen, len - recvLen, 0);
+		if (rLen <= 0)
+		{
+			fprintf(stderr, "error sending msg\n");
+			return 1;
+		}
+		recvLen += rLen;
+	}
+	return 0;
+}
+
 void request_prepare(struct message* message_to_send, char* cmd, char* file, int payload_size){
 	const int header_size = 15;
 	strcpy(message_to_send -> protocol , "myftp");
