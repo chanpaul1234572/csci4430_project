@@ -1,12 +1,12 @@
 CC = gcc
-LIB = -lpthread
+LIB = -lpthread -std=c99
 
-all: client ser
+all: client server
 
 client: myftpclient.c
 	${CC} -o myftpclient myftpclient.c ${LIB}
 
-ser: myftpserver.c
+server: myftpserver.c
 	${CC} -o myftpserver myftpserver.c ${LIB}
 
 clean:
