@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <dirent.h>
 #include "myftp.h"
 
 #define PORT 12345
@@ -33,7 +34,7 @@ int main(int argc, char **argv)
 	header.protocol[3] = 't';
 	header.protocol[4] = 'p';
 	header.length = 3000;
-	header.type = 0xA2;
+	header.type = 0xB2;
 	if (bind(sd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
 	{
 		printf("Bind error: %s (Errno:%d)\n", strerror(errno), errno);
@@ -104,14 +105,57 @@ int main(int argc, char **argv)
 			close(client_sd);
 		}
 	}
-	if ((send(client_sd, &header, 10, 0) == 10))
-	{
-		printf("send successfully\n");
+	else{
+		struct dirent* pStEntry = NULL;
+		struct dirent* pStResult = NULL;
+		DIR* pDir;
+		char temp[1024];
+		char *lsentry = NULL;
+		printf("%p\n", lsentry);
+		lsentry = (char *)malloc(1000);
+		printf("%p\n", lsentry);
+		pDir = opendir("./data");
+		if(NULL == pDir){
+			printf("Opendir failed\n");
+		}
+		else{
+			pStEntry = malloc(sizeof(struct dirent));
+			pStResult = malloc(sizeof(struct dirent));
+			while(! readdir_r(pDir, pStEntry, &pStResult) && pStResult != NULL){
+				if((strcmp(pStEntry->d_name, ".") != 0) && (strcmp(pStEntry->d_name, "..") != 0)){
+  				strcpy(temp,pStEntry->d_name);
+  			    strcat(lsentry,temp);
+  			    strcat(lsentry,"\n");
+  				}
+			}
+			printf("finished!\n");
+			strcat(lsentry, "\0");
+			free(pStEntry);
+			free(pStResult);
+			closedir(pDir);
+
+			printf("%s length = %d\n", lsentry, strlen(lsentry));
+			header.length = 10 + strlen(lsentry);
+
+			if ((send(client_sd, &header, 10, 0) == 10))
+			{
+				printf("send header successfully\n");
+				if(send(client_sd, lsentry, strlen(lsentry) + 1, 0) == 0){
+					printf("Send payload Error!\n");
+				}
+				else{
+					printf("Send payload successfully\n");
+				}
+			}
+			else
+			{
+				printf("failed\n");
+			}
+			free(lsentry);
+		}
+
 	}
-	else
-	{
-		printf("failed\n");
-	}
+	
 	close(client_sd);
 	close(sd);
 	return 0;

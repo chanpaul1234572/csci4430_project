@@ -18,22 +18,6 @@ long size_of_the_file(FILE *file)
 	return size;
 }
 
-int sendMsg(int sd, char *buff, int len)
-{
-	int recvLen = 0;
-	while (recvLen != len)
-	{
-		int rLen = send(sd, buff + recvLen, len - recvLen, 0);
-		if (rLen <= 0)
-		{
-			fprintf(stderr, "error sending msg\n");
-			return 1;
-		}
-		recvLen += rLen;
-	}
-	return 0;
-}
-
 void request_prepare(struct message_s *message_to_send, char *cmd, int payload_size)
 {
 	const int header_size = 10;
@@ -68,6 +52,7 @@ int main(int argc, char **argv)
 	int sd = socket(AF_INET, SOCK_STREAM, 0);
 	char pathname[100] = "./";
 	FILE *file = NULL;
+	FILE *GETFILE = NULL;
 	if (strcmp(argv[3], "put") == 0)
 	{
 		strcat(pathname, argv[4]);
@@ -140,7 +125,7 @@ int main(int argc, char **argv)
 	//prepare payload buf
 	long sent_size = 0;
 	char *payload_buf = NULL;
-	printf("%d\n", payload_size);
+	printf("%ld\n", payload_size);
 	if (mode != 0)
 	{
 		payload_buf = (char *)malloc(payload_size);
@@ -185,7 +170,7 @@ int main(int argc, char **argv)
 			printf("Send payload successfully! payload_size = %ld\n", payload_size);
 		}
 	}
-	int check = 0;
+	free(payload_buf);
 	message *reply_buf = NULL;
 	char protocol_check[6];
 	reply_buf = (message *)malloc(header_size);
@@ -203,29 +188,50 @@ int main(int argc, char **argv)
 		printf("%d\n", mode);
 		if (reply_buf -> type == 0xA2 && mode == 0)
 		{
-			check = 1;
+			length_of_payload = reply_buf -> length - 10;
+			payload_buf = (char*)malloc(length_of_payload);
+			if((revlen = recv(sd, payload_buf, length_of_payload, 0)) < 0){
+				printf("recevie payload failed\n");
+			}	
+			else{
+				fputs(payload_buf, stdout);
+			}
 		}
 		if (reply_buf -> type == 0xB2 && mode == 1)
 		{
-			check = 1;
+			if((revlen = recv(sd, reply_buf, header_size, 0)) < 0){
+				printf("recevie file data header failed\n"); 		
+			}
+			else{
+				length_of_payload = reply_buf -> length - 10;
+				payload_buf = (char*)malloc(length_of_payload);
+				if((revlen = recv(sd, payload_buf, length_of_payload, 0)) < 0){
+					printf("recevie payload failed\n");
+				}	
+				else{
+					GETFILE = fopen("argv[4]", "wb");
+					if(GETFILE == NULL){
+						perror("failed to create file");
+					}
+					else{
+						long filesize = 0;
+						filesize = fwrite(payload_buf, sizeof(char), revlen, GETFILE);
+						if(filesize != revlen){
+							printf("write failed\n");
+						}
+					}
+					fclose(GETFILE);
+				}
+			}
+		}
+		if (reply_buf -> type == 0xB3 && mode == 1){
+			printf("File not exist\n");
 		}
 		if (reply_buf -> type == 0xC2 && mode == 2)
 		{
-			check = 1;
 		}
-		printf("check = %d\n", check);
-		if (check)
-		{
-			int i = 0;
-			length_of_payload = reply_buf->length;
-			//extract the reply_buf[6]
-			length_of_payload -= 10;
-			printf("length_of_payload = %d\n", length_of_payload);
-
-
-		}
+		
 	}
-
 	//	char* reply_buf = NULL;
 	//	reply_buf = (char* ) malloc(sizeof(message))
 	//	if((reclen = recv(sd, buf, sizeof(buff), 0)) < 0){
