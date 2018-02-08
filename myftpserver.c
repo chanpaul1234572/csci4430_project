@@ -105,7 +105,7 @@ void *workerthread(void *x){
 		FILE_DATA = (struct message_s*) malloc(10);
 		const int header_size = 10;
   		strcpy(GET_REPLY -> protocol , "myftp");
-		if(recv(accept_fd,filename,sizeof(char),0) < 0){
+		if(recv(accept_fd,filename,sizeof(char)*100,0) < 0){
 			printf("filename receive error");
 			pthread_exit(NULL);
 		}
@@ -119,7 +119,7 @@ void *workerthread(void *x){
   			GET_REPLY -> length = header_size;
   			send(accept_fd,GET_REPLY,sizeof(struct message_s),0);
 		}
-
+		printf("Hi %s\n",filename);
 		if ( lstat(filename, &filestat) < 0){
 			pthread_exit(NULL);
 		}
@@ -150,9 +150,8 @@ void *workerthread(void *x){
 	else if (REQUEST->type == 0xC1){
 		struct message_s* PUT_REPLY;
 		struct message_s* FILE_DATA_PUT;
-		{
-			
-		};
+		PUT_REPLY = (struct message_s*) malloc(10);
+		FILE_DATA_PUT = (struct message_s*) malloc(10);
 
 		if(recv(accept_fd,filename,sizeof(char),0) < 0){
 			printf("filename receive error");
@@ -161,7 +160,7 @@ void *workerthread(void *x){
 
 		PUT_REPLY -> type = 0xC2;
   		PUT_REPLY -> length = header_size;
-  		send(accept_fd,&PUT_REPLY,sizeof(struct message_s),0);
+  		send(accept_fd,PUT_REPLY,sizeof(struct message_s),0);
 
   		if(recv(accept_fd,FILE_DATA_PUT,sizeof(struct message_s),0) < 0){
 			printf("file receive error");
@@ -179,7 +178,7 @@ void *workerthread(void *x){
 			if(numbytes == 0){
 				break;
 			}
-			numbytes = fwrite(dat, sizeof(char), numbytes, fp);
+			numbytes = fwrite(dat, sizeof(dat), numbytes, fp);
 			// printf("fwrite %d bytes\n", numbytes);
 		}
 		fclose(fp);
