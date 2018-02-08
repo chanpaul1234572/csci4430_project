@@ -37,23 +37,26 @@ int main(int argc, char** argv){
 			inet_ntop(AF_INET, &(client_addr.sin_addr), ip4, INET_ADDRSTRLEN);
 			printf("Connected with %s, length : %d\n",ip4, INET_ADDRSTRLEN);
 		}
-		while(1){
 			char buff[100];
 			int len;
 			if((len = recv(client_sd, buff, sizeof(buff), 0)) < 0){
 				printf("Receive error: %s (Errno:%d)\n", strerror(errno), errno);
 				exit(0);
 			}
+			//if(send(client_sd, "0", sizeof("0"), 0) < 0){
+			//		printf("ended\n");
+			//		close(client_sd);
+			//}
 			buff[len] = '\0';
 			printf("Received: ");
 			if(strlen(buff) != 0){
 				printf("%s\n", buff);
+				printf("len = %d\n", len);
+				printf("buff[6 -7] = %x%x\n", buff[6], buff[7]);
 			}
 			if(strcmp("exit", buff) == 0){
 				close(client_sd);
-				break;
 			}
-		}
 		close(sd);
 		return 0;
 }

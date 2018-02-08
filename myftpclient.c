@@ -34,7 +34,8 @@ int sendMsg(int sd, char *buff, int len)
 }
 
 void request_prepare(struct message_s* message_to_send, char* cmd, int payload_size){
-	const int header_size = 15;
+	const int header_size = 10;
+	bzero(message_to_send -> protocol, 5);
 	strcpy(message_to_send -> protocol , "myftp");
 	if(strcmp("list", cmd) == 0){
 		message_to_send -> type = 0xA1;
@@ -89,41 +90,38 @@ int main(int argc, char** argv){
       		exit(0);
 		}
 		printf("connected to the server: %s\n", inet_ntoa((server_addr.sin_addr)));
-		while(1){
 			struct message_s message_to_send;
-			long lsize = size_of_the_file(file);
+			long lsize = 0;
+			if(file != NULL){
+					lsize = size_of_the_file(file);
+			}		
+			printf("%ld\n", lsize);
 			request_prepare(&message_to_send, cmd, lsize);
+			printf("protocol = %s\n", message_to_send.protocol);
 			char* buf = NULL;
 			char end[4] = "\0";
 			buf = (char*) malloc(sizeof(message));
 			long hsize = sizeof(message);
-			printf("%ld\n", hsize);
+			printf("hsize = %ld\n", hsize);
 			bzero(buf, sizeof(message));
 			memcpy(buf, &(message_to_send.protocol), sizeof(message_to_send.protocol));
 			memcpy(buf + sizeof(message_to_send.protocol), &(message_to_send.type), sizeof(message_to_send.type));
 			memcpy(buf + (sizeof(message_to_send.protocol) + sizeof(message_to_send.type)), &(message_to_send.length), sizeof(message_to_send.length));
-			printf("Size of buf : %ld\n", sizeof(buf));
-			getchar();
+			printf("buf = %s", buf);
 			long sent_size = 0;
 			if(hsize > (sent_size = send(sd, buf, hsize, 0))){
 					if(sent_size < 0){
 						printf("Send failed: %s\n", (strerror(errno)));
 					}
 					else{
-							printf("Send incomplete\n");
+						printf("Send incomplete\n");
 					}
 			}
 			else
 			{
 					printf("Send successfully!\n");
 			}
-		fgets(end, 4, stdin);
-		if(strcmp(end, "end") == 0){
-				printf("end\n");
-				close(sd);
-				printf("Connection closed\n");
-		}
-	}
+			close(sd);
 	return 0;
 }		
 
