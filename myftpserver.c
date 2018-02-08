@@ -14,8 +14,7 @@
 #include<dirent.h>
 #include "myftp.h" 
 
-int sd;
-void clientconnection(void *x, int y);
+int sd; //server sd
 
 void *workerthread(void *x){
 	int accept_fd = *(int *)x;
@@ -158,31 +157,7 @@ void *workerthread(void *x){
 		}
 		fclose(fp);
 	}
-
 	close(accept_fd);
-
-	// int **client_sd = &clientsd_p;
-	 // printf("hello handling client - %p \n", clientsd_pp);
-	// free(clientsd_p);
-    // pthread_detach(pthread_self());
-	 printf("server_sd=%d\n", accept_fd);
-	// clientconnection((void*)clientsd_pp, sd); //handlle client connection 
-}
-
-//Handling client requests
-void clientconnection(void *clientsd_pp, int sd){
-	printf("blocking session for %p\n", clientsd_pp);
-	const int header_size = 15;
-	int recedata;
-	char buf[10000];
-	int clientsd = *(int*)clientsd_pp;
-	if((recedata = recv(clientsd,buf,sizeof(buf),0)) < 0){
-		printf("Receive Error!\n"); 
-	}
-	printf("%s", buf);
-
-	close(clientsd);
-	free(clientsd_pp);
 	pthread_exit(NULL);
 }
 
@@ -208,13 +183,13 @@ int main(int argc,char** argv){
 	server_addr.sin_port = htons(port);
 
 	if(bind(sd, (struct sockaddr*) &server_addr, sizeof(server_addr))==-1){
-		printf("Bind error: %s (Errno:%d)\n", strerror(errno), errno);
+		printf("bind error");
 		exit(1);
 	}
 
 	if(listen(sd, 999) == -1){ //MAXPENDING N later
-		printf("Listen error: %s (Errno:%d)\n", strerror(errno), errno);
-		exit(0);
+		printf("listen error");
+		exit(1);
 	}
 	int connection_count=0;
 	//accept 
@@ -223,23 +198,16 @@ int main(int argc,char** argv){
 		printf("--------Press crtl+c to stop the server---------\n");
 
 		if((client_sd[i] = accept(sd, (struct sockaddr*) &client_addr, &addrlen))==-1){
-			printf("Accept error: %s (Errno:%d)\n", strerror(errno), errno);
+			printf("accept error");
 			exit(0);
 		}else{
 			//open worker thread
 			connection_count++;
-			printf("count->%d i=%d\n", connection_count,i);
-			// printf("server sd:%d\n", sd );
-			// clientsd_p[i] = malloc(sizeof(client_sd));
-			printf("client sd:%d\n", client_sd[i]);
-			// *clientsd_p[i] = client_sd[i];
-			// *clientsd_p[i] = client_sd[i];
-			// printf("pointer - %p\n", (void *)clientsd_p[i]); 
-			// printf("pointer stored value - %d\n", clientsd_p[i]);
-
+			// printf("count->%d i=%d\n", connection_count,i);
+			// printf("client sd:%d\n", client_sd[i]);
 			// buf = ntohl(buf);
 			if(pthread_create(&threadid[i], NULL, workerthread,&client_sd[i])!=0){
-				printf("create thread error: %s (Errno:%d)\n", strerror(errno), errno);
+				printf("create thread error");
 
 			}
 		}
