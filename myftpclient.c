@@ -113,15 +113,16 @@ int main(int argc, char **argv)
 		payload_size = 0;
 		request_prepare(&message_to_send, cmd, payload_size);
 	}
-	char *header_buf = NULL;
-	header_buf = (char *)malloc(sizeof(message));
+	//char *header_buf = NULL;
+	message* header_buf = NULL;
+	header_buf = (message *)malloc(sizeof(message));
 	long header_size = sizeof(message);
 	bzero(header_buf, sizeof(message));
+	memcpy(header_buf, &message_to_send, header_size);
 	//prepare header buf
-	memcpy(header_buf, &(message_to_send.protocol), sizeof(message_to_send.protocol));
-	memcpy(header_buf + sizeof(message_to_send.protocol), &(message_to_send.type), sizeof(message_to_send.type));
-	memcpy(header_buf + (sizeof(message_to_send.protocol) + sizeof(message_to_send.type)), &(message_to_send.length), sizeof(message_to_send.length));
-	printf("buf = %s\n", header_buf);
+	//memcpy(header_buf, &(message_to_send.protocol), sizeof(message_to_send.protocol));
+	//memcpy(header_buf + sizeof(message_to_send.protocol), &(message_to_send.type), sizeof(message_to_send.type));
+	//memcpy(header_buf + (sizeof(message_to_send.protocol) + sizeof(message_to_send.type)), &(message_to_send.length), sizeof(message_to_send.length));
 	//prepare payload buf
 	long sent_size = 0;
 	char *payload_buf = NULL;
@@ -206,10 +207,10 @@ int main(int argc, char **argv)
 				length_of_payload = reply_buf -> length - 10;
 				payload_buf = (char*)malloc(length_of_payload);
 				if((revlen = recv(sd, payload_buf, length_of_payload, 0)) < 0){
-					printf("recevie payload failed\n");
+					printf("recevie file data failed\n");
 				}	
 				else{
-					GETFILE = fopen("argv[4]", "wb");
+					GETFILE = fopen(argv[4], "wb");
 					if(GETFILE == NULL){
 						perror("failed to create file");
 					}
@@ -222,6 +223,7 @@ int main(int argc, char **argv)
 					}
 					fclose(GETFILE);
 				}
+				free(payload_buf);
 			}
 		}
 		if (reply_buf -> type == 0xB3 && mode == 1){
@@ -229,19 +231,31 @@ int main(int argc, char **argv)
 		}
 		if (reply_buf -> type == 0xC2 && mode == 2)
 		{
+			printf("Ready to send\n");
+			message file_data;
+			file_data.protocol[0] = 'm';
+			file_data.protocol[1] = 'y';
+			file_data.protocol[2] = 'f';
+			file_data.protocol[3] = 't';
+			file_data.protocol[4] = 'p';
+			file_data.type = 0xFF;
+			file_data.length = 10 + size_of_the_file(file);
+			if(send(sd, &file_data, 10, 0) == 10){
+				printf("send file data header");
+				file = fopen(argv[4], "rb");
+				long numbytes = 0;
+				payload_buf = (char*)malloc(10000000);
+				while(!feof(file)){
+					numbytes = fread(payload_buf, 1, 10000000, file);
+					send(sd, payload_buf, numbytes, 0);
+					printf("Sending %ld bytes\n", numbytes);
+				}
+			}
+			free(payload_buf);
 		}
-		
 	}
-	//	char* reply_buf = NULL;
-	//	reply_buf = (char* ) malloc(sizeof(message))
-	//	if((reclen = recv(sd, buf, sizeof(buff), 0)) < 0){
-	//			printf("recvced reply message")
-	//		switch(mode) {
-	//			case 0:
-	//					{
-		free(payload_buf);
-		free(reply_buf);
-		free(header_buf);
+	free(reply_buf);
+	free(header_buf);
 	close(sd);
 	return 0;
 }
