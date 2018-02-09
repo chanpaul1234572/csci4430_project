@@ -238,7 +238,7 @@ int main(int argc, char **argv)
 			file_data.protocol[3] = 't';
 			file_data.protocol[4] = 'p';
 			file_data.type = 0xFF;
-			file_data.length = 10 + size_of_the_file(file);
+			file_data.length = htol(10 + size_of_the_file(file));
 			if(send(sd, &file_data, 10, 0) == 10){
 				file = fopen(argv[4], "rb");
 				long numbytes = 0;
