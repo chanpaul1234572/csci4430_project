@@ -120,7 +120,7 @@ void *workerthread(void *x){
 		fp = fopen(filename, "rb");
 
 		FILE_DATA -> type = 0xFF;
-		FILE_DATA -> length = 10 + size_of_the_file(fp);
+		FILE_DATA -> length = htonl(10 + size_of_the_file(fp));
 		send(accept_fd,FILE_DATA,sizeof(struct message_s),0);
 
 		while(!feof(fp)){
