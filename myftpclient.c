@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 			}
 			else{
 				printf("receive file data header success\n");
-				printf("%d\n",length_of_payload);
+				printf("%ld\n",length_of_payload);
 				length_of_payload = reply_buf -> length - 10;
 				payload_buf = (char*)malloc(length_of_payload);
 				if((revlen = recv(sd, payload_buf, length_of_payload, 0)) < 0){

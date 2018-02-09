@@ -129,8 +129,8 @@ void *workerthread(void *x){
 		FILE_DATA -> type = 0xFF;
   		FILE_DATA -> length = 10 + size_of_the_file(fp);
   		printf("file data length: %d\n",FILE_DATA -> length);
-  		printf("%d\n",size_of_the_file(fp));
-  		printf("%d\n",filestat.st_size);
+  		printf("%ld\n",size_of_the_file(fp));
+  		printf("%ld\n",filestat.st_size);
   		send(accept_fd,FILE_DATA,sizeof(struct message_s),0);
 
 		while(!feof(fp)){
