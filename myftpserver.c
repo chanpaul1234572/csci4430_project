@@ -16,18 +16,17 @@
 
 int sd; //server sd
 
-long size_of_the_file(FILE *file)
-{
-	long size = 0;
-	fseek(file, 0, SEEK_END);
-	size = ftell(file);
-	fseek(file, 0, SEEK_SET);
-	return size;
-}
+//long size_of_the_file(FILE *file)
+//{
+//	long size = 0;
+//	fseek(file, 0, SEEK_END);
+//	size = ftell(file);
+//	fseek(file, 0, SEEK_SET);
+//	return size;
+//}
 
 void *workerthread(void *x){
 	int accept_fd = *(int *)x;
-	printf("client sd - %d\n", accept_fd);
 	struct message_s* REQUEST = NULL;
 	struct stat filestat;
 	char dat[100000];
@@ -36,62 +35,56 @@ void *workerthread(void *x){
 	const int header_size = 10;
 	char filename[1000];
 	REQUEST = (struct message_s*) malloc(sizeof(struct message_s));
-	printf("request ptr: %p\n", REQUEST);
 	if(recv(accept_fd,REQUEST,sizeof(struct message_s),0) < 0){
 		printf("Receive Error");
 		pthread_exit(NULL);
 	}
 	else{
-	printf("Receive Header\n");
-	printf("%s\n", REQUEST->protocol);
-	printf("accept_fd:%d\n", accept_fd);
-	printf("%x",REQUEST->type);
-	fflush(stdout);
-    }
+		fflush(stdout);
+	}
 	if(REQUEST->type == 0xA1){
-		printf("LIST receive!");
+		printf("LIST receive!\n");
 		struct dirent *pStEntry = NULL;
 		struct dirent *pStResult = NULL;
 		DIR *pDir;
 		char temp[1024];
-		// char *lsentry = malloc(sizeof(char) * 1024);
 		char *lsentry = NULL;
 		lsentry = (char *)malloc(1000);
+		bzero(lsentry ,1000);
 		pDir = opendir("./data");
 
-	  	if(NULL == pDir){
-     	printf("Opendir failed!\n");
-      	pthread_exit(NULL);
- 	 	}
-
- 	 	pStEntry = malloc(sizeof(struct dirent));
-  	 	pStResult = malloc(sizeof(struct dirent));
-  		while(! readdir_r(pDir, pStEntry, &pStResult) && pStResult != NULL)
-  		{
-  			if((strcmp(pStEntry->d_name, ".") != 0) && (strcmp(pStEntry->d_name, "..") != 0)){
-  				strcpy(temp,pStEntry->d_name);
-  			    strcat(lsentry,temp);
-  			    strcat(lsentry,"\n");
-  			}
+		if(NULL == pDir){
+			printf("Opendir failed!\n");
+			pthread_exit(NULL);
+		}
+		pStEntry = malloc(sizeof(struct dirent));
+		pStResult = malloc(sizeof(struct dirent));
+		while(! readdir_r(pDir, pStEntry, &pStResult) && pStResult != NULL)
+		{
+			if((strcmp(pStEntry->d_name, ".") != 0) && (strcmp(pStEntry->d_name, "..") != 0)){
+				strcpy(temp,pStEntry->d_name);
+				strcat(lsentry,temp);
+				strcat(lsentry,"\n");
+			}
 		}
 		strcat(lsentry,"\0");
-  		// printf("%s",lsentry);
-  		free(pStEntry);
-  		free(pStResult);
-  		closedir(pDir);
+		// printf("%s",lsentry);
+		free(pStEntry);
+		free(pStResult);
+		closedir(pDir);
 
-  		struct message_s* LIST_REPLY;
-  		LIST_REPLY = (struct message_s*) malloc(sizeof(struct message_s));
-  		strcpy(LIST_REPLY -> protocol , "myftp");
-  		LIST_REPLY -> type = 0xA2;
-  		LIST_REPLY -> length = header_size + strlen(lsentry);
-   		if((send(accept_fd,LIST_REPLY,sizeof(struct message_s),0)) < 0 ){
-   			printf("Send Error!");
-   		}	
-   		else if(send(accept_fd,lsentry,strlen(lsentry)+1,0) < 0){
-   			 printf("Send Error!");
-   		}
-   		free(lsentry);
+		struct message_s* LIST_REPLY;
+		LIST_REPLY = (struct message_s*) malloc(sizeof(struct message_s));
+		strcpy(LIST_REPLY -> protocol , "myftp");
+		LIST_REPLY -> type = 0xA2;
+		LIST_REPLY -> length = header_size + strlen(lsentry);
+		if((send(accept_fd,LIST_REPLY,sizeof(struct message_s),0)) < 0 ){
+			printf("Send Error!");
+		}	
+		else if(send(accept_fd,lsentry,strlen(lsentry)+1,0) < 0){
+			printf("Send Error!");
+		}
+		free(lsentry);
 	}
 
 	///////////////////////////////////////////
@@ -99,27 +92,27 @@ void *workerthread(void *x){
 	//////////////GET///////////////////////
 
 	else if (REQUEST->type == 0xB1){
+		printf("GET Request!\n");
 		struct message_s* GET_REPLY;
 		struct message_s* FILE_DATA;
 		GET_REPLY = (struct message_s*) malloc(10);
 		FILE_DATA = (struct message_s*) malloc(10);
 		const int header_size = 10;
-  		strcpy(GET_REPLY -> protocol , "myftp");
+		strcpy(GET_REPLY -> protocol , "myftp");
 		if(recv(accept_fd,filename,sizeof(char)*100,0) < 0){
 			printf("filename receive error");
 			pthread_exit(NULL);
 		}
 
 		if( access( filename, F_OK ) != -1 ) {
-  			GET_REPLY -> type = 0xB2;
-  			GET_REPLY -> length = header_size;
-  			send(accept_fd,GET_REPLY,sizeof(struct message_s),0);
+			GET_REPLY -> type = 0xB2;
+			GET_REPLY -> length = header_size;
+			send(accept_fd,GET_REPLY,sizeof(struct message_s),0);
 		} else {
-   			GET_REPLY -> type = 0xB3;
-  			GET_REPLY -> length = header_size;
-  			send(accept_fd,GET_REPLY,sizeof(struct message_s),0);
+			GET_REPLY -> type = 0xB3;
+			GET_REPLY -> length = header_size;
+			send(accept_fd,GET_REPLY,sizeof(struct message_s),0);
 		}
-		printf("Hi %s\n",filename);
 		if ( lstat(filename, &filestat) < 0){
 			pthread_exit(NULL);
 		}
@@ -127,17 +120,14 @@ void *workerthread(void *x){
 		fp = fopen(filename, "rb");
 
 		FILE_DATA -> type = 0xFF;
-  		FILE_DATA -> length = 10 + size_of_the_file(fp);
-  		printf("file data length: %d\n",FILE_DATA -> length);
-  		printf("%ld\n",size_of_the_file(fp));
-  		printf("%ld\n",filestat.st_size);
-  		send(accept_fd,FILE_DATA,sizeof(struct message_s),0);
+		FILE_DATA -> length = 10 + size_of_the_file(fp);
+		send(accept_fd,FILE_DATA,sizeof(struct message_s),0);
 
 		while(!feof(fp)){
-		numbytes = fread(dat, sizeof(char), sizeof(dat), fp);
-		// printf("fread %d bytes, ", numbytes);
-		numbytes = send(accept_fd, dat, numbytes,0);
-		// printf("Sending %d bytesn",numbytes);
+			numbytes = fread(dat, sizeof(char), sizeof(dat), fp);
+			// printf("fread %d bytes, ", numbytes);
+			numbytes = send(accept_fd, dat, numbytes,0);
+			// printf("Sending %d bytesn",numbytes);
 		}
 		fclose(fp);
 
@@ -148,6 +138,7 @@ void *workerthread(void *x){
 	//////////////PUT///////////////////////
 
 	else if (REQUEST->type == 0xC1){
+		printf("PUT request!\n");
 		struct message_s* PUT_REPLY;
 		struct message_s* FILE_DATA_PUT;
 		PUT_REPLY = (struct message_s*) malloc(10);
@@ -159,10 +150,10 @@ void *workerthread(void *x){
 		}
 
 		PUT_REPLY -> type = 0xC2;
-  		PUT_REPLY -> length = header_size;
-  		send(accept_fd,PUT_REPLY,sizeof(struct message_s),0);
+		PUT_REPLY -> length = header_size;
+		send(accept_fd,PUT_REPLY,sizeof(struct message_s),0);
 
-  		if(recv(accept_fd,FILE_DATA_PUT,sizeof(struct message_s),0) < 0){
+		if(recv(accept_fd,FILE_DATA_PUT,sizeof(struct message_s),0) < 0){
 			printf("file receive error");
 			pthread_exit(NULL);
 		}
@@ -175,9 +166,8 @@ void *workerthread(void *x){
 			perror("fopen");
 			pthread_exit(NULL);
 		}
-		printf("%s\n",tempo2);
 		while(1){
-		// numbytes = read(new_fd, buf, sizeof(buf));
+			// numbytes = read(new_fd, buf, sizeof(buf));
 			numbytes = recv(accept_fd,dat,sizeof(dat),0);
 			printf("numbytes: %d\n",numbytes);
 			// printf("read %d bytes, ", numbytes);
@@ -250,5 +240,5 @@ int main(int argc,char** argv){
 	}
 	close(sd);
 	return 0;
-	}
-	
+}
+

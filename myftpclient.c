@@ -9,14 +9,14 @@
 #include <arpa/inet.h>
 #include "myftp.h"
 
-long size_of_the_file(FILE *file)
-{
-	long size = 0;
-	fseek(file, 0, SEEK_END);
-	size = ftell(file);
-	fseek(file, 0, SEEK_SET);
-	return size;
-}
+//long size_of_the_file(FILE *file)
+//{
+//	long size = 0;
+//	fseek(file, 0, SEEK_END);
+//	size = ftell(file);
+//	fseek(file, 0, SEEK_SET);
+//	return size;
+//}
 
 void request_prepare(struct message_s *message_to_send, char *cmd, int payload_size)
 {
@@ -58,7 +58,6 @@ int main(int argc, char **argv)
 		bzero(pathname, 100);
 		strcat(pathname, "./");
 		strcat(pathname, argv[4]);
-		printf("pathname: %s\n", pathname);
 		file = fopen(pathname, "r");
 		if (!file)
 		{
@@ -68,8 +67,7 @@ int main(int argc, char **argv)
 	}
 	else if (strcmp(argv[3], "get") == 0)
 	{
-				strcat(pathname, argv[4]);
-		printf("pathname: %s\n", pathname);
+		strcat(pathname, argv[4]);
 	}
 	else
 	{
@@ -128,7 +126,6 @@ int main(int argc, char **argv)
 	//prepare payload buf
 	long sent_size = 0;
 	char *payload_buf = NULL;
-	printf("%ld\n", payload_size);
 	if (mode != 0)
 	{
 		payload_buf = (char *)malloc(payload_size);
@@ -144,15 +141,16 @@ int main(int argc, char **argv)
 		if (sent_size < 0)
 		{
 			printf("Send header failed: %s\n", (strerror(errno)));
+			close(sd);
+			exit(1);
 		}
 		else
 		{
 			printf("Send header incomplete\n");
+			close(sd);
+			exit(1);
+
 		}
-	}
-	else
-	{
-		printf("Send header successfully!\n");
 	}
 	//send payload
 	if (mode != 0)
@@ -162,15 +160,15 @@ int main(int argc, char **argv)
 			if (sent_size < 0)
 			{
 				printf("Send payload failed: %s\n", (strerror(errno)));
+				close(sd);
+				exit(1);
 			}
 			else
 			{
 				printf("Send payload incomplete\n");
+				close(sd);
+				exit(1);
 			}
-		}
-		else
-		{
-			printf("Send payload successfully! payload_size = %ld\n", payload_size);
 		}
 	}
 	free(payload_buf);
@@ -183,21 +181,21 @@ int main(int argc, char **argv)
 	if ((revlen = recv(sd, reply_buf, header_size, 0)) < 0)
 	{
 		printf("recevie header failed\n");
+		close(sd);
+		exit(1);
+
 	}
 	else
 	{
-		printf("%x\n",reply_buf->type);
-		printf("%s\n", reply_buf -> protocol);
-		printf("%d\n", mode);
 		if (reply_buf -> type == 0xA2 && mode == 0)
 		{
 			length_of_payload = reply_buf -> length - 10;
-			payload_buf = (char*)malloc(length_of_payload);
+			payload_buf = (char*)malloc(length_of_payload + 1);
 			if((revlen = recv(sd, payload_buf, length_of_payload, 0)) < 0){
 				printf("recevie payload failed\n");
 			}	
 			else{
-				fputs(payload_buf, stdout);
+				printf("%s", payload_buf);
 			}
 		}
 		if (reply_buf -> type == 0xB2 && mode == 1)
@@ -206,15 +204,12 @@ int main(int argc, char **argv)
 				printf("recevie file data header failed\n"); 		
 			}
 			else{
-				printf("receive file data header success\n");
-				printf("%ld\n",length_of_payload);
 				length_of_payload = reply_buf -> length - 10;
 				payload_buf = (char*)malloc(length_of_payload);
 				if((revlen = recv(sd, payload_buf, length_of_payload, 0)) < 0){
 					printf("recevie file data failed\n");
 				}	
 				else{
-					printf("receive file data success\n");
 					GETFILE = fopen(argv[4], "wb");
 					if(GETFILE == NULL){
 						perror("failed to create file");
@@ -236,7 +231,6 @@ int main(int argc, char **argv)
 		}
 		if (reply_buf -> type == 0xC2 && mode == 2)
 		{
-			printf("Ready to send\n");
 			message file_data;
 			file_data.protocol[0] = 'm';
 			file_data.protocol[1] = 'y';
@@ -246,14 +240,12 @@ int main(int argc, char **argv)
 			file_data.type = 0xFF;
 			file_data.length = 10 + size_of_the_file(file);
 			if(send(sd, &file_data, 10, 0) == 10){
-				printf("send file data header");
 				file = fopen(argv[4], "rb");
 				long numbytes = 0;
 				payload_buf = (char*)malloc(10000000);
 				while(!feof(file)){
 					numbytes = fread(payload_buf, 1, 10000000, file);
 					send(sd, payload_buf, numbytes, 0);
-					printf("Sending %ld bytes\n", numbytes);
 				}
 			}
 			free(payload_buf);
